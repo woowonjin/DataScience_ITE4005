@@ -18,7 +18,9 @@ frequent_items = []
 # item의 길이가 1인것 부터 시작, 현재 얼마 길이의 아이템셋을 보고있는지를 알려주는 지표이다.
 current_item_len = 1
 
+# DB transaction의 갯수를 구하기 위해
 cnt = 0
+
 # DB에 들어있는 transaction들 정보를 DB_transactions array에 다 담기
 with open(input_file, "r") as f:
     while True:
@@ -27,13 +29,19 @@ with open(input_file, "r") as f:
             break
         cnt += 1
         without_line_change = line.split("\n")
+        # DB의 값들이 모두 integer 형태이기 떄문에 integer형태로 바꿔 주었다.
         transaction = list(map(int, without_line_change[0].split("\t")))
         DB_transactions.append(transaction)
     f.close()
 
+# minimum_support값을 퍼센트로 받았기 때문에 계산의 편리성을 위해 갯수로 바꿨다
 minimum_support = float(minimum_support_num/100 * cnt)
 
 
+"""
+각 elements값들이 DB에 들어있는 갯수를 {원소: 갯수} 형태로 가지고 있는 Dictionary를 인자로 받아 minimum_support
+를 넘지 못하는 elements들은 거르고, 만족하는 원소들의 list를 반환하는 함수이다
+"""
 def remove_item_about_support(item_dict):
     result = []
     for item in item_dict:
@@ -45,6 +53,10 @@ def remove_item_about_support(item_dict):
         return result
 
 
+"""
+예를들어 [1, 2]가 [1, 2, 3]에 들어있는지와 같은 확인은 순서에 상관없어야하고, 편리성을 위해 set으로 바꾸는게 필요해서
+list를 set으로 바꾸는 함수를 만들었다
+"""
 def list_to_set(item_list):
     result = []
     for item in item_list:
@@ -52,6 +64,10 @@ def list_to_set(item_list):
     return result
 
 
+"""
+조합에 해당하는 함수로, 현재 가진 원소들에서 나올수 있는 모든 조합을 만들고 그 조합들 중에서, 각각 마다 만약
+subset이 해당 갯수의 frequent set에 하나라도 포함되지않으면 지우는 함수이다.
+"""
 def join(length):
     if length == 2:
         result = list(itertools.combinations(
@@ -84,6 +100,10 @@ def join(length):
         return remove_result_set
 
 
+"""
+원소가 1개부터 늘어나는 형식이므로 frequent한 원소들은 추가하고, 또 원소의 갯수도 증가시켜준다. 메인함수라고 볼수았다.
+frequent_items list에는 0번 index에는 길이 1짜리 frequent item set list, 1번 index에는 길이 2짜리 frequent item set list, 이런식으로 저장된다.
+"""
 def execute_apriori():
     global current_item_len
     global DB_transactions
@@ -122,6 +142,10 @@ def execute_apriori():
             current_item_len += 1
 
 
+"""
+association rule을 만드는 함수로, 만약 {1, 2, 3}이라는 원소가 있다면, 이와 관련된 길이 1, 2짜리 모든 subset을 만들었고,
+그것과의 차집합을 구해 차집합 -> subset 식의 모든 association rule을 만들어 support와 confidence 를 구했다.
+"""
 def association_rule():
     max_frequent_len = len(frequent_items)
     DB_set = list_to_set(DB_transactions)
@@ -158,4 +182,5 @@ def association_rule():
 
 
 execute_apriori()
+# print(frequent_items)
 association_rule()
